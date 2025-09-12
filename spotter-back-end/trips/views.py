@@ -1,3 +1,75 @@
-from django.shortcuts import render
+from datetime import datetime
 
-# Create your views here.
+from django.shortcuts import get_object_or_404
+from eld.models import Driver
+from logs.models import LogSheet
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Trip
+from .planner import plan_trip
+from .serializers import DriverSerializer, LogSheetSerializer, TripSerializer
+
+
+class PlanTripView(APIView):
+    def post(self, request):
+        trip_data = request.data.get('trip')
+        driver_data = request.data.get('driver')
+        if not trip_data or not driver_data:
+            return Response({'detail': 'Both trip and driver data are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        trip_serializer = TripSerializer(data=trip_data)
+        driver_serializer = DriverSerializer(data=driver_data)
+
+        if not trip_serializer.is_valid():
+            return Response({'trip_errors': trip_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        if not driver_serializer.is_valid():
+            return Response({'driver_errors': driver_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        trip = trip_serializer.save()
+        driver = driver_serializer.save()
+
+        try:
+            result = plan_trip(driver, trip)
+        except Exception as e:
+            return Response({'detail': f'Error during trip planning: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Handle new planner response format
+        if 'errors' in result:
+            return Response({'detail': 'Trip planning failed.', 'errors': result['errors']}, status=status.HTTP_400_BAD_REQUEST)
+
+        plans = result.get('plans', [])
+        planning_errors = [p.get('errors') for p in plans if p.get('errors')]
+        if planning_errors:
+            return Response({'detail': 'HOS or planning errors found.', 'planning_errors': planning_errors, 'result': result}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class GenerateLogSheetsView(APIView):
+    """Create a placeholder LogSheet record (PDF generation removed)."""
+
+    def post(self, request, trip_id):
+        trip = get_object_or_404(Trip, pk=trip_id)
+        driver_id = request.data.get('driver_id')
+        if not driver_id:
+            return Response({'detail': 'driver_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        driver = get_object_or_404(Driver, pk=driver_id)
+
+        today = datetime.utcnow().date()
+        now = datetime.utcnow()
+        # Placeholder: future implementation will build duty blocks and optionally file.
+        log_sheet = LogSheet.objects.create(
+            driver=driver, date=today, trip=trip)
+
+        serializer = LogSheetSerializer(log_sheet)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class DriverCycleView(APIView):
+    def get(self, request, driver_id):
+        driver = get_object_or_404(Driver, pk=driver_id)
+        used = driver.current_cycle_hours  # assume already minutes
+        remaining = max(0, 70 * 60 - used)
+        return Response({'driver_id': driver.id, 'used_minutes': used, 'remaining_minutes': remaining})

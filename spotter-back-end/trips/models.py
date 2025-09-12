@@ -7,6 +7,13 @@ class Trip(models.Model):
     destination = models.CharField(max_length=100)
     pickup_location = models.CharField(max_length=100)
     estimated_duration = models.IntegerField()
+    # Optional geocoded coordinates (WGS84)
+    origin_lat = models.FloatField(null=True, blank=True)
+    origin_long = models.FloatField(null=True, blank=True)
+    pickup_lat = models.FloatField(null=True, blank=True)
+    pickup_long = models.FloatField(null=True, blank=True)
+    dropoff_lat = models.FloatField(null=True, blank=True)
+    dropoff_long = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.origin} to {self.destination} ({self.estimated_duration} mins)"

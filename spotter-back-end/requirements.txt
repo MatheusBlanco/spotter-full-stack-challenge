@@ -8,12 +8,12 @@ geographiclib==2.1
 geopy==2.4.0
 idna==3.10
 mysqlclient==2.2.4
-pillow==11.3.0
+openrouteservice==2.3.3
+Pillow==11.3.0
 python-dateutil==2.8.2
 python-decouple==3.8
 python-dotenv==1.1.1
 pytz==2025.2
-reportlab==4.0.4
 requests==2.31.0
 six==1.17.0
 sqlparse==0.5.3
