@@ -1,7 +1,6 @@
 import apiClient from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-// Types
 export interface Driver {
   id: number;
   name: string;
@@ -59,7 +58,6 @@ export interface PlanTripResponse {
   errors?: string[];
 }
 
-// API Functions
 export const tripsApi = {
   planTrip: (data: PlanTripRequest) =>
     apiClient.post<PlanTripResponse>("/trips/plan/", data),
@@ -71,7 +69,6 @@ export const tripsApi = {
     apiClient.get(`/trips/drivers/${driverId}/cycle/`),
 };
 
-// React Query Hooks
 export const usePlanTrip = () => {
   return useMutation({
     mutationFn: tripsApi.planTrip,

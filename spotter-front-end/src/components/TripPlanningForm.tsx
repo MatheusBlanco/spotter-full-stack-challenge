@@ -6,7 +6,6 @@ import {
   Truck,
   User,
 } from "lucide-react";
-import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +17,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useTripPlanningForm } from "@/hooks/useTripPlanningForm";
 import {
-  usePlanTrip,
   type Driver,
   type PlanTripResponse,
   type Trip,
@@ -35,181 +33,11 @@ interface TripPlanningFormProps {
 }
 
 export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
-  const planTripMutation = usePlanTrip();
-  const { toast } = useToast();
-
-  // Form state
-  const [formData, setFormData] = useState({
-    currentLocation: "",
-    pickupLocation: "",
-    dropoffLocation: "",
-    driverName: "",
-    licenseNumber: "",
-    currentCycleHours: 0,
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const handleInputChange = (field: string, value: string | number) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.currentLocation.trim()) {
-      newErrors.currentLocation = "Current location is required";
-    }
-    if (!formData.pickupLocation.trim()) {
-      newErrors.pickupLocation = "Pickup location is required";
-    }
-    if (!formData.dropoffLocation.trim()) {
-      newErrors.dropoffLocation = "Dropoff location is required";
-    }
-    if (!formData.driverName.trim()) {
-      newErrors.driverName = "Driver name is required";
-    }
-    if (!formData.licenseNumber.trim()) {
-      newErrors.licenseNumber = "License number is required";
-    }
-    if (formData.currentCycleHours < 0 || formData.currentCycleHours > 70) {
-      newErrors.currentCycleHours =
-        "Current cycle hours must be between 0 and 70";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    const tripData = {
-      trip: {
-        origin: formData.currentLocation,
-        pickup_location: formData.pickupLocation,
-        destination: formData.dropoffLocation,
-        estimated_duration: 0, // Will be calculated by backend
-      },
-      driver: {
-        name: formData.driverName,
-        license_number: formData.licenseNumber,
-        current_cycle_hours: formData.currentCycleHours * 60, // Convert to minutes
-      },
-    };
-
-    planTripMutation.mutate(tripData, {
-      onSuccess: (response) => {
-        // Create trip and driver objects matching the API response format
-        const trip: Trip = {
-          id: 0, // Will be set by backend if needed
-          origin: formData.currentLocation,
-          pickup_location: formData.pickupLocation,
-          destination: formData.dropoffLocation,
-          estimated_duration: 0,
-        };
-
-        const driver: Driver = {
-          id: 0, // Will be set by backend if needed
-          name: formData.driverName,
-          license_number: formData.licenseNumber,
-          current_cycle_hours: formData.currentCycleHours * 60, // Convert to minutes
-        };
-
-        toast({
-          title: "Trip Planned Successfully",
-          description: "Your route has been calculated with HOS compliance.",
-        });
-
-        onPlanGenerated(response.data, trip, driver);
-      },
-      onError: (error: {
-        response?: { data?: Record<string, unknown> };
-        message?: string;
-      }) => {
-        // Handle backend validation errors
-        if (error.response?.data) {
-          const errorData = error.response.data;
-
-          // Handle driver validation errors
-          if (errorData.driver_errors) {
-            Object.entries(
-              errorData.driver_errors as Record<string, string[]>
-            ).forEach(([field, messages]) => {
-              const message = Array.isArray(messages) ? messages[0] : messages;
-              toast({
-                variant: "destructive",
-                title: "Driver Validation Error",
-                description: `${field.replace("_", " ")}: ${message}`,
-              });
-            });
-          }
-
-          // Handle trip validation errors
-          if (errorData.trip_errors) {
-            Object.entries(
-              errorData.trip_errors as Record<string, string[]>
-            ).forEach(([field, messages]) => {
-              const message = Array.isArray(messages) ? messages[0] : messages;
-              toast({
-                variant: "destructive",
-                title: "Trip Validation Error",
-                description: `${field.replace("_", " ")}: ${message}`,
-              });
-            });
-          }
-
-          // Handle general error details
-          if (errorData.detail) {
-            toast({
-              variant: "destructive",
-              title: "Planning Error",
-              description: errorData.detail as string,
-            });
-          }
-
-          // Handle planning errors
-          if (errorData.errors) {
-            (errorData.errors as string[]).forEach((errorMsg: string) => {
-              toast({
-                variant: "destructive",
-                title: "Trip Planning Failed",
-                description: errorMsg,
-              });
-            });
-          }
-        } else {
-          // Generic error fallback
-          toast({
-            variant: "destructive",
-            title: "Network Error",
-            description:
-              error.message || "Failed to plan trip. Please try again.",
-          });
-        }
-      },
-    });
-  };
+  const { formData, errors, isLoading, handleInputChange, handleSubmit } =
+    useTripPlanningForm(onPlanGenerated);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Progress Steps */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -257,7 +85,6 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
 
         <CardContent className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Route Information Section */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -372,7 +199,6 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
               </div>
             </div>
 
-            {/* Driver Information Section */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -447,7 +273,6 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
               </div>
             </div>
 
-            {/* HOS Information Section */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
                 <div className="p-2 bg-orange-100 rounded-lg">
@@ -522,7 +347,6 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
                     </div>
                   </div>
 
-                  {/* Visual progress bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
                       className={`h-3 rounded-full transition-all duration-300 ${
@@ -551,14 +375,13 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
               </div>
             </div>
 
-            {/* Submit Button */}
             <div className="pt-6 border-t border-gray-200">
               <Button
                 type="submit"
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-[1.02] disabled:transform-none disabled:opacity-50"
-                disabled={planTripMutation.isPending}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                disabled={isLoading}
               >
-                {planTripMutation.isPending ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center space-x-3">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                     <span>Planning Your Trip...</span>
@@ -573,7 +396,7 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
                 )}
               </Button>
 
-              {!planTripMutation.isPending && (
+              {!isLoading && (
                 <p className="text-center text-sm text-gray-500 mt-3">
                   We'll calculate your route, check HOS compliance, and plan
                   fuel stops

@@ -20,7 +20,6 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Custom icons for different marker types
 const createCustomIcon = (color: string, symbol: string) => {
   return L.divIcon({
     html: `
@@ -45,11 +44,11 @@ const createCustomIcon = (color: string, symbol: string) => {
   });
 };
 
-const originIcon = createCustomIcon("#10B981", "S"); // Start - Green
-const pickupIcon = createCustomIcon("#F59E0B", "P"); // Pickup - Amber
-const destinationIcon = createCustomIcon("#EF4444", "D"); // Destination - Red
-const fuelIcon = createCustomIcon("#3B82F6", "⛽"); // Fuel - Blue
-const restIcon = createCustomIcon("#8B5CF6", "🛏️"); // Rest - Purple
+const originIcon = createCustomIcon("#10B981", "S");
+const pickupIcon = createCustomIcon("#F59E0B", "P");
+const destinationIcon = createCustomIcon("#EF4444", "D");
+const fuelIcon = createCustomIcon("#3B82F6", "⛽");
+const restIcon = createCustomIcon("#8B5CF6", "🛏️");
 
 interface RoutePoint {
   lat: number;
@@ -139,7 +138,6 @@ export function RouteMap({
     );
   }
 
-  // Default center (fallback)
   const center: [number, number] =
     points.length > 0 ? [points[0].lat, points[0].lng] : [39.8283, -98.5795]; // Geographic center of US
 
@@ -157,7 +155,6 @@ export function RouteMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Route line */}
         {routeCoordinates && routeCoordinates.length > 1 && (
           <Polyline
             positions={routeCoordinates}
@@ -167,7 +164,6 @@ export function RouteMap({
           />
         )}
 
-        {/* Location markers */}
         {points.map((point, index) => (
           <Marker
             key={`${point.type}-${index}`}

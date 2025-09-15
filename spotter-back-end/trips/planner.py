@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 def geocode_address(address):
-    """Geocode an address to lat/lng coordinates using Nominatim (free)."""
     if not address:
         return None, None
 
@@ -26,22 +25,16 @@ def geocode_address(address):
 
 
 def get_coordinates(trip):
-    """Get or derive coordinates for trip waypoints."""
-    coordinates = []
-
-    # Origin coordinates
     if trip.origin_lat and trip.origin_long:
         origin_coords = (trip.origin_long, trip.origin_lat)
     else:
         lat, lng = geocode_address(trip.origin)
         if lat and lng:
             origin_coords = (lng, lat)
-            # Could save back to trip model if needed
         else:
             raise ValueError(
                 f"Could not determine coordinates for origin: {trip.origin}")
 
-    # Pickup coordinates
     if trip.pickup_lat and trip.pickup_long:
         pickup_coords = (trip.pickup_long, trip.pickup_lat)
     else:
@@ -52,7 +45,6 @@ def get_coordinates(trip):
             raise ValueError(
                 f"Could not determine coordinates for pickup: {trip.pickup_location}")
 
-    # Dropoff coordinates (using destination field)
     if trip.dropoff_lat and trip.dropoff_long:
         dropoff_coords = (trip.dropoff_long, trip.dropoff_lat)
     else:
@@ -72,7 +64,6 @@ def calculate_fuel_stops(total_distance_miles, route_coordinates):
     if total_distance_miles > 1000:
         num_stops = int(total_distance_miles // 1000)
         for i in range(1, num_stops + 1):
-            # Simple approximation - place fuel stops at intervals
             stop_distance = i * 1000
             fuel_stops.append({
                 'distance_from_start': stop_distance,
@@ -85,7 +76,6 @@ def calculate_fuel_stops(total_distance_miles, route_coordinates):
 def plan_trip(driver, trip):
     """Enhanced trip planner with geocoding and improved HOS logic."""
     try:
-        # 1. Get route coordinates
         coordinates = get_coordinates(trip)
         route = get_route(coordinates)
 
@@ -99,10 +89,8 @@ def plan_trip(driver, trip):
         total_duration_seconds = sum(seg['duration'] for seg in segments)
         total_driving_hours = total_duration_seconds / 3600
 
-        # 2. Calculate fuel stops
         fuel_stops = calculate_fuel_stops(total_distance_miles, coordinates)
 
-        # 3. Break into daily plans with proper HOS logic
         plans = []
         current_date = datetime.now().date()
         driving_today = timedelta()
@@ -111,38 +99,31 @@ def plan_trip(driver, trip):
         remaining_driving_time = timedelta(hours=total_driving_hours)
 
         while remaining_driving_time > timedelta(0):
-            # Calculate how much we can drive today
             max_driving_today = timedelta(hours=11) - driving_today
             max_on_duty_today = timedelta(hours=14) - on_duty_today
 
-            # Limit by both driving and on-duty hours
             available_time = min(max_driving_today, max_on_duty_today)
 
             if available_time <= timedelta(0):
-                # End of day - need rest
                 plans.append({
                     'date': current_date.isoformat(),
                     'driving_hours': driving_today.total_seconds() / 3600,
                     'on_duty_hours': on_duty_today.total_seconds() / 3600,
-                    'off_duty_hours': 10,  # Required rest
+                    'off_duty_hours': 10,
                     'status': 'completed'
                 })
-                # Start new day
                 current_date += timedelta(days=1)
                 driving_today = timedelta()
                 on_duty_today = timedelta()
                 continue
 
-            # Drive as much as possible today
             time_to_drive = min(remaining_driving_time, available_time)
             driving_today += time_to_drive
             on_duty_today += time_to_drive
             remaining_driving_time -= time_to_drive
 
-        # Add dropoff time to final day
-        on_duty_today += timedelta(hours=1)  # 1 hour for dropoff
+        on_duty_today += timedelta(hours=1)
 
-        # Add final day
         plans.append({
             'date': current_date.isoformat(),
             'driving_hours': driving_today.total_seconds() / 3600,
@@ -151,7 +132,6 @@ def plan_trip(driver, trip):
             'status': 'completed'
         })
 
-        # 4. Validate HOS for each day
         for plan in plans:
             errors = []
             if plan['driving_hours'] > 11:
@@ -161,7 +141,6 @@ def plan_trip(driver, trip):
             if errors:
                 plan['errors'] = errors
 
-        # 5. Add trip summary
         trip_summary = {
             'total_distance_miles': round(total_distance_miles, 1),
             'total_driving_hours': round(total_driving_hours, 1),

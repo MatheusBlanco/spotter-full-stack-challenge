@@ -7,7 +7,6 @@ export const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
       retry: (failureCount, error) => {
-        // Don't retry on 4xx errors except 408, 429
         if (
           error instanceof AxiosError &&
           error.response &&
@@ -16,7 +15,6 @@ export const queryClient = new QueryClient({
         ) {
           return error.response.status === 408 || error.response.status === 429;
         }
-        // Retry up to 3 times for other errors
         return failureCount < 3;
       },
       refetchOnWindowFocus: false,

@@ -1,13 +1,11 @@
 from django.db import models
 
 
-# Create your models here.
 class Trip(models.Model):
     origin = models.CharField(max_length=100)
     destination = models.CharField(max_length=100)
     pickup_location = models.CharField(max_length=100)
     estimated_duration = models.IntegerField()
-    # Optional geocoded coordinates (WGS84)
     origin_lat = models.FloatField(null=True, blank=True)
     origin_long = models.FloatField(null=True, blank=True)
     pickup_lat = models.FloatField(null=True, blank=True)
@@ -33,7 +31,7 @@ class RouteSegment(models.Model):
 
 class FuelStop(models.Model):
     location = models.CharField(max_length=100)
-    fuel_amount = models.FloatField()  # in liters
+    fuel_amount = models.FloatField()
     trip = models.ForeignKey(
         Trip, related_name='fuel_stops', on_delete=models.CASCADE)
 
@@ -43,7 +41,7 @@ class FuelStop(models.Model):
 
 class RestStop(models.Model):
     location = models.CharField(max_length=100)
-    duration = models.IntegerField()  # in minutes
+    duration = models.IntegerField()
     reason = models.CharField(max_length=255, blank=True, null=True)
     trip = models.ForeignKey(
         Trip, related_name='rest_stops', on_delete=models.CASCADE)

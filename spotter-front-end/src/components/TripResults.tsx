@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { useTripResults } from "@/hooks/useTripResults";
+import { transformCoordinatesForMap } from "@/services/routeMapService";
 import type { Driver, PlanTripResponse, Trip } from "@/services/trips";
 import {
   AlertCircle,
-  Calendar,
   CheckCircle,
   Clock,
   FileText,
@@ -12,81 +11,21 @@ import {
   MapPin,
   Truck,
 } from "lucide-react";
-import { useState } from "react";
 import { ELDLogSheet } from "./ELDLogSheet";
-import { RouteMap, type RouteMapProps } from "./RouteMap";
+import { RouteMap } from "./RouteMap";
 
 interface TripResultsProps {
   results: PlanTripResponse;
   trip: Trip;
   driver: Driver;
-  onGenerateLogs?: () => void;
 }
 
-export function TripResults({
-  results,
-  trip,
-  driver,
-  onGenerateLogs,
-}: TripResultsProps) {
+export function TripResults({ results, trip, driver }: TripResultsProps) {
   const { plans, summary, fuel_stops } = results;
-  const [showLogSheets, setShowLogSheets] = useState(false);
-  const { toast } = useToast();
+  const { showLogSheets, hasErrors, handleBackToResults } =
+    useTripResults(results);
 
-  // Convert backend coordinates format [lng, lat] to RouteMap format
-  const mapProps: RouteMapProps = {
-    points: summary.coordinates.map(([lng, lat], index) => {
-      let type: "origin" | "pickup" | "destination" | "fuel" | "rest";
-      let name: string;
-
-      if (index === 0) {
-        type = "origin";
-        name = trip.origin || "Origin";
-      } else if (index === 1) {
-        type = "pickup";
-        name = trip.pickup_location || "Pickup Location";
-      } else if (index === summary.coordinates.length - 1) {
-        type = "destination";
-        name = trip.destination || "Destination";
-      } else {
-        type = "rest";
-        name = `Stop ${index}`;
-      }
-
-      return {
-        lat,
-        lng,
-        type,
-        name,
-        description:
-          type === "pickup"
-            ? "Load pickup point"
-            : type === "destination"
-            ? "Final delivery point"
-            : type === "origin"
-            ? "Trip start point"
-            : "Route stop",
-      };
-    }),
-    routeCoordinates: summary.coordinates.map(([lng, lat]) => [lat, lng]),
-  };
-
-  const hasErrors = plans.some((plan) => plan.errors && plan.errors.length > 0);
-
-  const handleGenerateLogs = () => {
-    setShowLogSheets(true);
-    toast({
-      title: "Log Sheets Generated",
-      description: `Created ${plans.length} daily log sheet${
-        plans.length > 1 ? "s" : ""
-      } for your trip.`,
-    });
-    onGenerateLogs?.();
-  };
-
-  const handleBackToResults = () => {
-    setShowLogSheets(false);
-  };
+  const mapProps = transformCoordinatesForMap(results, trip);
 
   if (showLogSheets) {
     return (
@@ -133,7 +72,6 @@ export function TripResults({
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
-      {/* Progress Steps */}
       <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -164,7 +102,6 @@ export function TripResults({
           </div>
         </CardContent>
       </Card>
-      {/* Header */}
       <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border p-6">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -180,20 +117,8 @@ export function TripResults({
             <span className="font-medium text-red-600">{trip.destination}</span>
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {onGenerateLogs && (
-            <Button
-              onClick={handleGenerateLogs}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 transform hover:scale-105"
-            >
-              <Calendar size={20} />
-              Generate Log Sheets
-            </Button>
-          )}
-        </div>
       </div>
 
-      {/* Error Alert */}
       {hasErrors && (
         <Card className="border-red-200 bg-red-50">
           <CardHeader className="flex flex-row items-center gap-2">
@@ -212,9 +137,7 @@ export function TripResults({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Trip Summary & Daily Plans */}
         <div className="space-y-6">
-          {/* Trip Summary */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -268,7 +191,6 @@ export function TripResults({
             </CardContent>
           </Card>
 
-          {/* Fuel Stops */}
           {fuel_stops && fuel_stops.length > 0 && (
             <Card>
               <CardHeader>
@@ -301,7 +223,6 @@ export function TripResults({
             </Card>
           )}
 
-          {/* Daily Plans */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -365,7 +286,6 @@ export function TripResults({
           </Card>
         </div>
 
-        {/* Right Column: Map */}
         <div>
           <Card className="h-fit">
             <CardHeader>

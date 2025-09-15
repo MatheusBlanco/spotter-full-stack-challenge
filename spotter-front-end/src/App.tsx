@@ -24,16 +24,10 @@ function App() {
     driver: Driver
   ) => {
     setTripPlanData({ results, trip, driver });
-    console.log("Trip plan generated:", results);
   };
 
   const handleBackToForm = () => {
     setTripPlanData(null);
-  };
-
-  const handleGenerateLogs = () => {
-    // TODO: Implement log sheet generation
-    console.log("Generate log sheets for trip:", tripPlanData?.trip.id);
   };
 
   return (
@@ -67,7 +61,6 @@ function App() {
                 results={tripPlanData.results}
                 trip={tripPlanData.trip}
                 driver={tripPlanData.driver}
-                onGenerateLogs={handleGenerateLogs}
               />
             </div>
           )}

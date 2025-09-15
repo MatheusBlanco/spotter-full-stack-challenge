@@ -35,7 +35,6 @@ class PlanTripView(APIView):
         except Exception as e:
             return Response({'detail': f'Error during trip planning: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Handle new planner response format
         if 'errors' in result:
             return Response({'detail': 'Trip planning failed.', 'errors': result['errors']}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -48,7 +47,6 @@ class PlanTripView(APIView):
 
 
 class GenerateLogSheetsView(APIView):
-    """Create a placeholder LogSheet record (PDF generation removed)."""
 
     def post(self, request, trip_id):
         trip = get_object_or_404(Trip, pk=trip_id)
@@ -58,8 +56,6 @@ class GenerateLogSheetsView(APIView):
         driver = get_object_or_404(Driver, pk=driver_id)
 
         today = datetime.utcnow().date()
-        now = datetime.utcnow()
-        # Placeholder: future implementation will build duty blocks and optionally file.
         log_sheet = LogSheet.objects.create(
             driver=driver, date=today, trip=trip)
 
@@ -70,6 +66,6 @@ class GenerateLogSheetsView(APIView):
 class DriverCycleView(APIView):
     def get(self, request, driver_id):
         driver = get_object_or_404(Driver, pk=driver_id)
-        used = driver.current_cycle_hours  # assume already minutes
+        used = driver.current_cycle_hours
         remaining = max(0, 70 * 60 - used)
         return Response({'driver_id': driver.id, 'used_minutes': used, 'remaining_minutes': remaining})
