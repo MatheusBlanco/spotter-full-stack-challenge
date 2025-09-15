@@ -1,9 +1,11 @@
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { Driver, PlanTripResponse, Trip } from "@/services/trips";
 import {
   AlertCircle,
   Calendar,
+  CheckCircle,
   Clock,
   FileText,
   Fuel,
@@ -130,19 +132,65 @@ export function TripResults({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Progress Steps */}
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 opacity-50">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-green-700">Plan Your Trip</span>
+              </div>
+              <div className="w-12 h-0.5 bg-green-300"></div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">2</span>
+                </div>
+                <span className="font-medium text-green-700">
+                  Review Results
+                </span>
+              </div>
+              <div className="w-12 h-0.5 bg-gray-300"></div>
+              <div className="flex items-center space-x-2 opacity-50">
+                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                  <span className="text-gray-600 text-sm font-semibold">3</span>
+                </div>
+                <span className="text-gray-500">Generate Logs</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Trip Planning Results</h2>
-        {onGenerateLogs && (
-          <button
-            onClick={handleGenerateLogs}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Calendar size={16} />
-            Generate Log Sheets
-          </button>
-        )}
+      <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border p-6">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Trip Planning Results
+          </h2>
+          <p className="text-gray-600">
+            Route:{" "}
+            <span className="font-medium text-blue-600">{trip.origin}</span> →
+            <span className="font-medium text-green-600 mx-1">
+              {trip.pickup_location}
+            </span>{" "}
+            →
+            <span className="font-medium text-red-600">{trip.destination}</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {onGenerateLogs && (
+            <Button
+              onClick={handleGenerateLogs}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 transform hover:scale-105"
+            >
+              <Calendar size={20} />
+              Generate Log Sheets
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Error Alert */}

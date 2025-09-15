@@ -38,25 +38,27 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Spotter ELD Trip Planner
-            </h1>
-            <p className="text-lg text-gray-600">
-              Professional trip planning with Hours of Service compliance
-            </p>
-          </div>
-
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="container mx-auto px-4 py-8">
           {!tripPlanData ? (
-            <TripPlanningForm onPlanGenerated={handlePlanGenerated} />
+            <div className="space-y-8">
+              <div className="text-center">
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+                  Spotter ELD Trip Planner
+                </h1>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                  Professional trucking route planning with Hours of Service
+                  compliance, real-time tracking, and DOT-compliant logging
+                </p>
+              </div>
+              <TripPlanningForm onPlanGenerated={handlePlanGenerated} />
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex justify-center">
                 <button
                   onClick={handleBackToForm}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+                  className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   ← Plan Another Trip
                 </button>
