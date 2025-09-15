@@ -3,16 +3,37 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import "./App.css";
 import { TripPlanningForm } from "./components/TripPlanningForm";
-import type { PlanTripResponse } from "./services/trips";
+import { TripResults } from "./components/TripResults";
+import { Toaster } from "./components/ui/toaster";
+import type { Driver, PlanTripResponse, Trip } from "./services/trips";
 
 const queryClient = new QueryClient();
 
-function App() {
-  const [tripPlan, setTripPlan] = useState<PlanTripResponse | null>(null);
+interface TripPlanData {
+  results: PlanTripResponse;
+  trip: Trip;
+  driver: Driver;
+}
 
-  const handlePlanGenerated = (plan: PlanTripResponse) => {
-    setTripPlan(plan);
-    console.log("Trip plan generated:", plan);
+function App() {
+  const [tripPlanData, setTripPlanData] = useState<TripPlanData | null>(null);
+
+  const handlePlanGenerated = (
+    results: PlanTripResponse,
+    trip: Trip,
+    driver: Driver
+  ) => {
+    setTripPlanData({ results, trip, driver });
+    console.log("Trip plan generated:", results);
+  };
+
+  const handleBackToForm = () => {
+    setTripPlanData(null);
+  };
+
+  const handleGenerateLogs = () => {
+    // TODO: Implement log sheet generation
+    console.log("Generate log sheets for trip:", tripPlanData?.trip.id);
   };
 
   return (
@@ -28,72 +49,31 @@ function App() {
             </p>
           </div>
 
-          <TripPlanningForm onPlanGenerated={handlePlanGenerated} />
-
-          {/* Display Trip Plan Results */}
-          {tripPlan && (
-            <div className="mt-8">
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-2xl font-semibold mb-4">
-                  Trip Plan Generated
-                </h2>
-                <div className="space-y-4">
-                  {tripPlan.plans.map((plan, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <h3 className="text-lg font-medium mb-2">
-                        Day {index + 1}: {plan.date}
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium text-blue-600">
-                            Driving Hours:
-                          </span>
-                          <span className="ml-2">{plan.driving}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium text-green-600">
-                            On-Duty Hours:
-                          </span>
-                          <span className="ml-2">{plan.on_duty}</span>
-                        </div>
-                      </div>
-                      {plan.errors && plan.errors.length > 0 && (
-                        <div className="mt-2">
-                          <span className="font-medium text-red-600">
-                            Warnings:
-                          </span>
-                          <ul className="list-disc list-inside text-red-600 text-sm mt-1">
-                            {plan.errors.map((error, errorIndex) => (
-                              <li key={errorIndex}>{error}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {tripPlan.planning_errors &&
-                  tripPlan.planning_errors.length > 0 && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <h4 className="text-red-800 font-semibold mb-2">
-                        Planning Issues:
-                      </h4>
-                      <ul className="list-disc list-inside text-red-700 text-sm">
-                        {tripPlan.planning_errors.map((error, index) => (
-                          <li key={index}>{error}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+          {!tripPlanData ? (
+            <TripPlanningForm onPlanGenerated={handlePlanGenerated} />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <button
+                  onClick={handleBackToForm}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+                >
+                  ← Plan Another Trip
+                </button>
               </div>
+              <TripResults
+                results={tripPlanData.results}
+                trip={tripPlanData.trip}
+                driver={tripPlanData.driver}
+                onGenerateLogs={handleGenerateLogs}
+              />
             </div>
           )}
         </div>
       </div>
+      <Toaster />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
-
 export default App;

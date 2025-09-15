@@ -11,14 +11,25 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { usePlanTrip, type PlanTripResponse } from "@/services/trips";
+import { useToast } from "@/hooks/use-toast";
+import {
+  usePlanTrip,
+  type Driver,
+  type PlanTripResponse,
+  type Trip,
+} from "@/services/trips";
 
 interface TripPlanningFormProps {
-  onPlanGenerated: (result: PlanTripResponse) => void;
+  onPlanGenerated: (
+    result: PlanTripResponse,
+    trip: Trip,
+    driver: Driver
+  ) => void;
 }
 
 export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
   const planTripMutation = usePlanTrip();
+  const { toast } = useToast();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -98,7 +109,93 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
 
     planTripMutation.mutate(tripData, {
       onSuccess: (response) => {
-        onPlanGenerated(response.data);
+        // Create trip and driver objects matching the API response format
+        const trip: Trip = {
+          id: 0, // Will be set by backend if needed
+          origin: formData.currentLocation,
+          pickup_location: formData.pickupLocation,
+          destination: formData.dropoffLocation,
+          estimated_duration: 0,
+        };
+
+        const driver: Driver = {
+          id: 0, // Will be set by backend if needed
+          name: formData.driverName,
+          license_number: formData.licenseNumber,
+          current_cycle_hours: formData.currentCycleHours * 60, // Convert to minutes
+        };
+
+        toast({
+          title: "Trip Planned Successfully",
+          description: "Your route has been calculated with HOS compliance.",
+        });
+
+        onPlanGenerated(response.data, trip, driver);
+      },
+      onError: (error: {
+        response?: { data?: Record<string, unknown> };
+        message?: string;
+      }) => {
+        // Handle backend validation errors
+        if (error.response?.data) {
+          const errorData = error.response.data;
+
+          // Handle driver validation errors
+          if (errorData.driver_errors) {
+            Object.entries(
+              errorData.driver_errors as Record<string, string[]>
+            ).forEach(([field, messages]) => {
+              const message = Array.isArray(messages) ? messages[0] : messages;
+              toast({
+                variant: "destructive",
+                title: "Driver Validation Error",
+                description: `${field.replace("_", " ")}: ${message}`,
+              });
+            });
+          }
+
+          // Handle trip validation errors
+          if (errorData.trip_errors) {
+            Object.entries(
+              errorData.trip_errors as Record<string, string[]>
+            ).forEach(([field, messages]) => {
+              const message = Array.isArray(messages) ? messages[0] : messages;
+              toast({
+                variant: "destructive",
+                title: "Trip Validation Error",
+                description: `${field.replace("_", " ")}: ${message}`,
+              });
+            });
+          }
+
+          // Handle general error details
+          if (errorData.detail) {
+            toast({
+              variant: "destructive",
+              title: "Planning Error",
+              description: errorData.detail as string,
+            });
+          }
+
+          // Handle planning errors
+          if (errorData.errors) {
+            (errorData.errors as string[]).forEach((errorMsg: string) => {
+              toast({
+                variant: "destructive",
+                title: "Trip Planning Failed",
+                description: errorMsg,
+              });
+            });
+          }
+        } else {
+          // Generic error fallback
+          toast({
+            variant: "destructive",
+            title: "Network Error",
+            description:
+              error.message || "Failed to plan trip. Please try again.",
+          });
+        }
       },
     });
   };
@@ -266,19 +363,6 @@ export function TripPlanningForm({ onPlanGenerated }: TripPlanningFormProps) {
               )}
             </div>
           </div>
-
-          {/* Error Display */}
-          {planTripMutation.isError && (
-            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-              <h4 className="text-red-800 font-semibold mb-2">
-                Planning Error
-              </h4>
-              <p className="text-red-700 text-sm">
-                {planTripMutation.error?.message ||
-                  "Failed to plan trip. Please check your inputs and try again."}
-              </p>
-            </div>
-          )}
 
           {/* Submit Button */}
           <Button

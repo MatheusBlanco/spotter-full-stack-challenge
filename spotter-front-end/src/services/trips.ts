@@ -25,9 +25,25 @@ export interface Trip {
 
 export interface TripPlan {
   date: string;
-  driving: string;
-  on_duty: string;
+  driving_hours: number;
+  on_duty_hours: number;
+  off_duty_hours: number;
+  status: string;
   errors?: string[];
+}
+
+export interface FuelStop {
+  distance_from_start: number;
+  location: string;
+  fuel_amount: number;
+}
+
+export interface TripSummary {
+  total_distance_miles: number;
+  total_driving_hours: number;
+  estimated_days: number;
+  fuel_stops: FuelStop[];
+  coordinates: [number, number][];
 }
 
 export interface PlanTripRequest {
@@ -37,7 +53,10 @@ export interface PlanTripRequest {
 
 export interface PlanTripResponse {
   plans: TripPlan[];
+  summary: TripSummary;
+  fuel_stops: FuelStop[];
   planning_errors?: string[];
+  errors?: string[];
 }
 
 // API Functions
