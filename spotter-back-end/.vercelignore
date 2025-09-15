@@ -1,0 +1,49 @@
+# Development files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+tests/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+server.log
+
+# Database
+*.db
+*.sqlite3
+
+# Media files (if you don't want to deploy user uploads)
+media/
+
+# Build files
+build/
+dist/
+
+# Python virtual environment
+venv/
+env/
+.venv/
+.env/
+
+# Git
+.git/
+.gitignore

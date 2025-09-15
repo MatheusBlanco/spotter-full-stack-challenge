@@ -1,15 +1,12 @@
-from datetime import datetime
 
 from django.shortcuts import get_object_or_404
 from eld.models import Driver
-from logs.models import LogSheet
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Trip
 from .planner import plan_trip
-from .serializers import DriverSerializer, LogSheetSerializer, TripSerializer
+from .serializers import DriverSerializer, TripSerializer
 
 
 class PlanTripView(APIView):
@@ -44,23 +41,6 @@ class PlanTripView(APIView):
             return Response({'detail': 'HOS or planning errors found.', 'planning_errors': planning_errors, 'result': result}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(result, status=status.HTTP_200_OK)
-
-
-class GenerateLogSheetsView(APIView):
-
-    def post(self, request, trip_id):
-        trip = get_object_or_404(Trip, pk=trip_id)
-        driver_id = request.data.get('driver_id')
-        if not driver_id:
-            return Response({'detail': 'driver_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        driver = get_object_or_404(Driver, pk=driver_id)
-
-        today = datetime.utcnow().date()
-        log_sheet = LogSheet.objects.create(
-            driver=driver, date=today, trip=trip)
-
-        serializer = LogSheetSerializer(log_sheet)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class DriverCycleView(APIView):

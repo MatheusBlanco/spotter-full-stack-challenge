@@ -62,9 +62,6 @@ export const tripsApi = {
   planTrip: (data: PlanTripRequest) =>
     apiClient.post<PlanTripResponse>("/trips/plan/", data),
 
-  generateLogSheets: (tripId: number, driverId: number) =>
-    apiClient.post(`/trips/${tripId}/logs/`, { driver_id: driverId }),
-
   getDriverCycle: (driverId: number) =>
     apiClient.get(`/trips/drivers/${driverId}/cycle/`),
 };
@@ -78,13 +75,6 @@ export const usePlanTrip = () => {
     onError: (error) => {
       console.error("Failed to plan trip:", error);
     },
-  });
-};
-
-export const useGenerateLogSheets = () => {
-  return useMutation({
-    mutationFn: ({ tripId, driverId }: { tripId: number; driverId: number }) =>
-      tripsApi.generateLogSheets(tripId, driverId),
   });
 };
 
