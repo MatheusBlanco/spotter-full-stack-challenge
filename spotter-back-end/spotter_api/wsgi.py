@@ -14,3 +14,8 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'spotter_api.settings')
 
 application = get_wsgi_application()
+
+# Vercel Python runtime expects a top-level variable named `app` or `handler`.
+# Django creates `application`; we alias it for the serverless entrypoint.
+app = application  # for @vercel/python
+handler = application  # some tooling looks for `handler`

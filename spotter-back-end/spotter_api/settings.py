@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'spotter_api.simple_options_middleware.SimpleOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -142,10 +143,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
+
+# Only include STATICFILES_DIRS if the directory exists (avoid FileNotFound issues in serverless)
+_candidate_static = os.path.join(BASE_DIR, 'static')
+if os.path.isdir(_candidate_static):
+    STATICFILES_DIRS = [_candidate_static]
+else:
+    STATICFILES_DIRS = []
+
+# Do NOT try to create STATIC_ROOT on Vercel (read-only). Collectstatic should run at build time if needed.
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -157,16 +164,18 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS settings for frontend communication
+# IMPORTANT: Do NOT include trailing slashes in origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://spotter-frontend-xi.vercel.app",
 ]
 
-# Allow all origins for development/testing - Enable for production temporarily
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+# Explicitly enumerate allowed origins instead of wildcard to ensure proper echoing of Origin header
+CORS_ALLOW_ALL_ORIGINS = False
 
-CORS_ALLOW_CREDENTIALS = True
+# Only needed if you plan to send or receive cookies/authorization headers (currently not used)
+CORS_ALLOW_CREDENTIALS = False
 
 CORS_ALLOWED_HEADERS = [
     "accept",
@@ -187,4 +196,10 @@ CORS_ALLOWED_METHODS = [
     "PATCH",
     "POST",
     "PUT",
+]
+
+# CSRF trusted origins (covers POST requests if session/cookie auth is ever used)
+CSRF_TRUSTED_ORIGINS = [
+    "https://spotter-frontend-xi.vercel.app",
+    "https://*.vercel.app",
 ]
