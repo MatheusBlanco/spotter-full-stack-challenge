@@ -163,8 +163,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://spotter-frontend-xi.vercel.app",
 ]
 
-# Allow all origins for development/testing - Remove in production
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'
+# Allow all origins for development/testing - Enable for production temporarily
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
 
 CORS_ALLOW_CREDENTIALS = True
 
