@@ -160,8 +160,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    # Update with your actual frontend domain
-    "https://your-frontend-domain.vercel.app",
+    "https://spotter-frontend-xi.vercel.app",
 ]
 
 # Allow all origins for development/testing - Remove in production
